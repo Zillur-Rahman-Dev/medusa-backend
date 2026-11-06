@@ -7,8 +7,8 @@
   },
   "scripts": {
     "dev": "npx turbo dev",
-    "build": "npx turbo build",
-    "start": "npm run --prefix apps/backend start",
+    "build": "npx turbo build && node -e \"const fs=require('fs'); if(fs.existsSync('apps/backend/.medusa/server/public')){fs.cpSync('apps/backend/.medusa/server/public', 'apps/backend/public', {recursive: true});}\"",
+    "start": "node -e \"const fs=require('fs'); if(!fs.existsSync('apps/backend/public') && fs.existsSync('apps/backend/.medusa/server/public')){fs.cpSync('apps/backend/.medusa/server/public', 'apps/backend/public', {recursive: true});}\" && npm run --prefix apps/backend start",
     "lint": "turbo lint",
     "test": "turbo test",
     "backend:seed": "turbo seed --filter=@dtc/backend",

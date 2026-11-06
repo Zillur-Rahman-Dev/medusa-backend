@@ -1,0 +1,1 @@
+import{u as a,a as n,r as o,D as c,j as u}from"./index-ucWyJJD3.js";var f=()=>{const s=a(),{hasPermission:e,isLoading:t}=n(),i=o.useMemo(()=>c.find(r=>e(r.permission))?.to??"/settings/profile",[e]);return o.useEffect(()=>{t||s(i,{replace:!0})},[t,i,s]),u.jsx("div",{})};export{f as Component};

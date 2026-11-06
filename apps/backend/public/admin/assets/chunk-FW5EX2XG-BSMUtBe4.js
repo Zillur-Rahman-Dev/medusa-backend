@@ -1,0 +1,1 @@
+var s=e=>{const[p,r,...t]=e.split("_");if(!r)return e;const n=r.split("-").map(o=>o.charAt(0).toUpperCase()+o.slice(1)).join(" ");if(!t.length)return n;const a=t.length===1?t[0].toUpperCase():t.join("_");return`${n} (${a})`};export{s as f};
