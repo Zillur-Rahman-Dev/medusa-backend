@@ -8,7 +8,7 @@
   "scripts": {
     "dev": "npx turbo dev",
     "build": "npx turbo build",
-    "start": "npx turbo start",
+    "start": "npm run --prefix apps/backend start",
     "lint": "turbo lint",
     "test": "turbo test",
     "backend:seed": "turbo seed --filter=@dtc/backend",
