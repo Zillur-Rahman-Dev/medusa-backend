@@ -6,14 +6,17 @@
     "node": ">=20.0.0"
   },
   "scripts": {
-    "dev": "turbo dev",
-    "build": "turbo build",
-    "start": "turbo start",
+    "dev": "npx turbo dev",
+    "build": "npx turbo build",
+    "start": "npx turbo start",
     "lint": "turbo lint",
     "test": "turbo test",
     "backend:seed": "turbo seed --filter=@dtc/backend",
     "backend:dev": "turbo dev --filter=@dtc/backend",
     "storefront:dev": "turbo dev --filter=@dtc/storefront"
+  },
+  "dependencies": {
+    "turbo": "^2.0.14"
   },
   "pnpm": {
     "overrides": {
