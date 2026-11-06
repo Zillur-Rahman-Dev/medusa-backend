@@ -13,7 +13,7 @@
     "medusa"
   ],
   "scripts": {
-    "build": "medusa build && node -e \"const fs=require('fs'); if(fs.existsSync('.medusa/server/public')){fs.cpSync('.medusa/server/public', 'public', {recursive: true});}\"",
+    "build": "medusa build --no-lint && node -e \"const fs=require('fs'); if(fs.existsSync('.medusa/server/public')){fs.cpSync('.medusa/server/public', 'public', {recursive: true});}\"",
     "start": "node -e \"const fs=require('fs'); if(!fs.existsSync('public') && fs.existsSync('.medusa/server/public')){fs.cpSync('.medusa/server/public', 'public', {recursive: true});}\" && medusa start",
     "dev": "medusa develop",
     "lint": "medusa lint",
@@ -55,7 +55,7 @@
     "yalc": "^1.0.0-pre.53"
   },
   "engines": {
-    "node": ">=20.0.0"
+    "node": "22.x"
   },
   "packageManager": "npm@10.9.8"
 }
