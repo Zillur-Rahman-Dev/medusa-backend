@@ -47,7 +47,7 @@ module.exports = defineConfig({
             options: {
               providers: [
                 {
-                  resolve: '@tsc_tech/medusa-plugin-cloudinary/providers/file-cloudinary',
+                  resolve: './src/modules/file-cloudinary',
                   id: 'cloudinary',
                   options: {
                     apiKey: process.env.CLOUDINARY_API_KEY,
