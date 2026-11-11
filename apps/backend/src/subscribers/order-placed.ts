@@ -8,14 +8,20 @@ export default async function orderPlacedHandler({
   const logger = container.resolve("logger")
 
   const botToken = process.env.TELEGRAM_BOT_TOKEN
-  const chatId = process.env.TELEGRAM_CHAT_ID
+  const rawChatIds = process.env.TELEGRAM_CHAT_ID
 
-  if (!botToken || !chatId) {
+  if (!botToken || !rawChatIds) {
     logger.warn(
       "[Telegram Bot] TELEGRAM_BOT_TOKEN or TELEGRAM_CHAT_ID is missing in environment variables. Telegram alert skipped."
     )
     return
   }
+
+  // Supports single ID, Telegram Group ID (starts with -), or comma-separated multiple IDs (e.g. "123,456,-100789")
+  const chatIds = rawChatIds
+    .split(",")
+    .map((id) => id.trim())
+    .filter(Boolean)
 
   try {
     const orderModuleService = container.resolve(Modules.ORDER)
@@ -83,26 +89,38 @@ ${itemsList}
 <i>💡 কাস্টমারকে দ্রুত কল দিয়ে অর্ডারটি কনফার্ম করুন!</i>
 `.trim()
 
-    const res = await fetch(`https://api.telegram.org/bot${botToken}/sendMessage`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        chat_id: chatId,
-        text: message,
-        parse_mode: "HTML",
-        disable_web_page_preview: true,
-      }),
-    })
+    // Send to all configured recipients (individual chats and/or group)
+    for (const cid of chatIds) {
+      try {
+        const res = await fetch(
+          `https://api.telegram.org/bot${botToken}/sendMessage`,
+          {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+              chat_id: cid,
+              text: message,
+              parse_mode: "HTML",
+              disable_web_page_preview: true,
+            }),
+          }
+        )
 
-    const result = await res.json()
-    if (result.ok) {
-      logger.info(`[Telegram Bot] Order alert successfully sent for #${rawOrder.id}`)
-    } else {
-      logger.error(
-        `[Telegram Bot] Failed to send Telegram alert: ${JSON.stringify(result)}`
-      )
+        const result = await res.json()
+        if (result.ok) {
+          logger.info(
+            `[Telegram Bot] Order alert successfully sent for #${rawOrder.id} to chat ${cid}`
+          )
+        } else {
+          logger.error(
+            `[Telegram Bot] Failed to send Telegram alert to ${cid}: ${JSON.stringify(result)}`
+          )
+        }
+      } catch (err) {
+        logger.error(`[Telegram Bot] Network error sending to ${cid}:`, err)
+      }
     }
   } catch (error) {
     logger.error(`[Telegram Bot] Error processing order.placed event:`, error)
