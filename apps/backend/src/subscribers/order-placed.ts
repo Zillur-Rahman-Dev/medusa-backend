@@ -17,7 +17,6 @@ export default async function orderPlacedHandler({
     return
   }
 
-  // Supports single ID, Telegram Group ID (starts with -), or comma-separated multiple IDs (e.g. "123,456,-100789")
   const chatIds = rawChatIds
     .split(",")
     .map((id) => id.trim())
@@ -41,7 +40,9 @@ export default async function orderPlacedHandler({
         .filter(Boolean)
         .join(" ") || "সম্মানিত ক্রেতা"
 
-    const phone = rawOrder.shipping_address?.phone || "ফোন নম্বর পাওয়া যায়নি"
+    const rawPhone = rawOrder.shipping_address?.phone || ""
+    const phone = rawPhone || "ফোন নম্বর দেওয়া হয়নি"
+
     const address =
       [
         rawOrder.shipping_address?.address_1,
@@ -71,6 +72,22 @@ export default async function orderPlacedHandler({
 
     const displayOrderId = rawOrder.id ? rawOrder.id.slice(-6) : "NEW"
 
+    // Format phone number for WhatsApp direct link (Bangladesh 880 format)
+    let cleanPhone = rawPhone.replace(/[^0-9]/g, "")
+    if (cleanPhone.startsWith("0")) {
+      cleanPhone = "88" + cleanPhone
+    } else if (cleanPhone.length === 10) {
+      cleanPhone = "880" + cleanPhone
+    }
+
+    const prefilledWhatsAppMsg = encodeURIComponent(
+      `আসসালামু আলাইকুম ${customerName} ভাই, Pure Honey শপ থেকে আপনার অর্ডার #${displayOrderId} আমরা পেয়েছি।\nআপনার দেওয়া ঠিকানা: ${address}।\nঅর্ডারটি কনফার্ম করার জন্য অনুগ্রহ করে একটু জানাবেন। ধন্যবাদ!`
+    )
+
+    const whatsappUrl = cleanPhone
+      ? `https://wa.me/${cleanPhone}?text=${prefilledWhatsAppMsg}`
+      : ""
+
     const message = `
 🔔 <b>নতুন মধু অর্ডার এসেছে!</b>
 ━━━━━━━━━━━━━━━━━━━━
@@ -86,10 +103,35 @@ ${itemsList}
 🚚 <b>পেমেন্ট মোড:</b> ক্যাশ অন ডেলিভারি (COD)
 ⏰ <b>সময়:</b> ${new Date().toLocaleString("en-US", { timeZone: "Asia/Dhaka" })}
 ━━━━━━━━━━━━━━━━━━━━
-<i>💡 কাস্টমারকে দ্রুত কল দিয়ে অর্ডারটি কনফার্ম করুন!</i>
+<i>💡 নিচের বাটনে চাপ দিয়ে সরাসরি WhatsApp করুন অথবা অর্ডার কনফার্ম করুন:</i>
 `.trim()
 
-    // Send to all configured recipients (individual chats and/or group)
+    // Inline Keyboard Buttons
+    const inlineKeyboard: any[][] = []
+
+    // Row 1: WhatsApp Button
+    if (whatsappUrl) {
+      inlineKeyboard.push([
+        {
+          text: "💬 WhatsApp কাস্টমার",
+          url: whatsappUrl,
+        },
+      ])
+    }
+
+    // Row 2: One-tap Order Status Management Buttons
+    inlineKeyboard.push([
+      {
+        text: "✅ কনফার্ম করুন",
+        callback_data: `confirm_${rawOrder.id}`,
+      },
+      {
+        text: "❌ অর্ডার বাতিল",
+        callback_data: `cancel_${rawOrder.id}`,
+      },
+    ])
+
+    // Send alert to all configured recipients
     for (const cid of chatIds) {
       try {
         const res = await fetch(
@@ -104,6 +146,9 @@ ${itemsList}
               text: message,
               parse_mode: "HTML",
               disable_web_page_preview: true,
+              reply_markup: {
+                inline_keyboard: inlineKeyboard,
+              },
             }),
           }
         )
